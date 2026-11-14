@@ -28,7 +28,8 @@ function parseSources(text) {
     if (!name || !org) problems.push(`${id}: 명칭·기관 없음`);
     const urls = url.match(/https:\/\/[^\s)>]+/g) || [];
     if (!urls.length) problems.push(`${id}: 공식 URL 없음`);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(checked)) problems.push(`${id}: 조회일 형식 오류`);
+    const d = new Date(`${checked}T00:00:00Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(checked) || isNaN(d) || d.toISOString().slice(0, 10) !== checked || d > new Date()) problems.push(`${id}: 조회일 오류(실재하는 과거 날짜)`);
     if (!STATUSES.includes(status)) problems.push(`${id}: 확인 상태 값 오류 ${status}`);
     if (!["", "잦음"].includes(change)) problems.push(`${id}: 변동 칸은 빈칸 또는 잦음`);
     sources.set(id, { status });
@@ -43,6 +44,7 @@ function parseCurriculum(text) {
   const blocks = text.split(/^### /m).slice(1);
   for (const block of blocks) {
     const head = block.split("\n")[0];
+    if (/^#{3,} /m.test(block.split("\n").slice(1).join("\n"))) problems.push(`${head}: 블록 안에 하위 제목(모듈은 ### 하나로)`);
     const m = head.match(/^([BPMOX]\d+) · (.+)$/);
     if (!m) { problems.push(`모듈 제목 형식 오류: ${head}`); continue; }
     const id = m[1];
@@ -50,7 +52,7 @@ function parseCurriculum(text) {
     const fields = {};
     for (const line of block.split("\n").slice(1)) {
       const f = line.match(/^- ([^:]+): (.+)$/);
-      if (f) fields[f[1]] = f[2];
+      if (f) { if (fields[f[1]]) problems.push(`${head}: 「${f[1]}」 중복`); fields[f[1]] = f[2]; }
     }
     for (const name of FIELDS) if (!fields[name]) problems.push(`${id}: 「${name}」 없음`);
     for (const [name, prefix] of [["국내 근거", "KR-"], ["글로벌 비교", "GL-"]]) {
@@ -58,7 +60,7 @@ function parseCurriculum(text) {
       if (!ids.some((x) => x.startsWith(prefix))) problems.push(`${id}: 「${name}」에 ${prefix} 출처 없음`);
       refs.push(...ids.map((x) => [id, x]));
     }
-    if (fields["경계·연결"] && !GO_AREAS.some((a) => fields["경계·연결"].includes(a))) problems.push(`${id}: 경계·연결에 go-* 영역 이름 없음`);
+    if (fields["경계·연결"] && !GO_AREAS.some((a) => new RegExp(`(^|[^\\w-])${a}(?![\\w-])`).test(fields["경계·연결"]))) problems.push(`${id}: 경계·연결에 go-* 영역 이름 없음`);
     if (id.startsWith("X") && !fields["산출물 필수 항목"]) problems.push(`${id}: 「산출물 필수 항목」 없음`);
     if (fields["목표"] && !LEVELS.some((l) => fields["목표"].startsWith(`${l} — `))) problems.push(`${id}: 목표 수준 형식 오류`);
     const prereq = !fields["선수"] || fields["선수"] === "없음" ? [] : fields["선수"].split(",").map((s) => s.trim());
@@ -79,13 +81,15 @@ function parseCurriculum(text) {
 
 function findVisualAssets(files) {
   const allowedJs = /^tools\/.*\.m?js$/;
-  return files.filter((f) => /\.(html?|css|svg|png|jpe?g|gif|webp|avif)$/i.test(f) || (/\.m?js$/i.test(f) && !allowedJs.test(f)));
+  return files.filter((f) => /\.(x?html?|css|svg|png|jpe?g|gif|webp|avif|bmp|ico|tiff?)$/i.test(f) || (/\.(m|c)?jsx?$|\.tsx$/i.test(f) && !allowedJs.test(f)));
 }
 
+// 튜터가 복사할 수 있는 마크업을 찾는다. 구축 기록(docs/build/)은 규칙 설명에 태그 이름을 적으므로 펜스 안만 본다.
 function findTemplateMarkup(name, text) {
-  const hits = [];
-  for (const m of text.matchAll(/(```|~~~)[\s\S]*?\1/g)) if (/<(!doctype|html|svg|style|canvas|script)\b/i.test(m[0])) hits.push(name);
-  return hits;
+  const tag = /<(!doctype|html|svg|style|canvas|script)\b/i;
+  if (!name.startsWith("docs/build/")) return tag.test(text) ? [name] : [];
+  for (const m of text.matchAll(/(```|~~~)[\s\S]*?(\1|$)/g)) if (tag.test(m[0])) return [name];
+  return [];
 }
 
 function main() {
@@ -98,16 +102,22 @@ function main() {
     if (!sources.has(ref)) errors.push(`${mod}: 없는 출처 ${ref}`);
     else if (sources.get(ref).status === "미확인") errors.push(`${mod}: 미확인 출처 참조 ${ref}`);
   }
-  if (/제\s?\d+\s?조/.test(mapText)) errors.push("map.md에 조문 번호 금지(sources.md에만 둔다)");
+  if (/\d+\s?조(의\s?\d+)?|\bArt(icle)?\.?\s?\d+|§/.test(mapText)) errors.push("map.md에 조문 번호 금지(sources.md에만 둔다)");
   if (modules.size === 0) errors.push("모듈을 찾지 못함");
 
   const files = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], { cwd: root, encoding: "utf8" }).split("\0").filter(Boolean);
   for (const f of findVisualAssets(files)) errors.push(`미리 만든 시각 자료 금지: ${f}`);
-  for (const f of files.filter((x) => x.endsWith(".md") && existsSync(join(root, x)))) for (const n of findTemplateMarkup(f, read(f))) errors.push(`복사용 마크업 금지: ${n}`);
+  for (const f of files.filter((x) => /\.md$/i.test(x) && existsSync(join(root, x)))) for (const n of findTemplateMarkup(f, read(f))) errors.push(`복사용 마크업 금지: ${n}`);
 
   for (const p of [".claude/settings.json", "learner-template/state.json"]) {
     try { JSON.parse(read(p)); } catch (e) { errors.push(`${p}: JSON 오류 ${e.constructor.name}`); }
   }
+  const REQUIRED_ALLOW = ["Edit(/learner/state.json)", "Edit(/learner/log.md)", "Edit(/learner/studio/**/*.html)", "Edit(/learner/work/**)", "WebSearch", "WebFetch", "Bash(open learner/studio/*.html)", "Bash(xdg-open learner/studio/*.html)", 'Bash(start "" learner/studio/*.html)', "PowerShell(Start-Process learner/studio/*.html)"];
+  try {
+    const allow = JSON.parse(read(".claude/settings.json")).permissions?.allow || [];
+    for (const r of REQUIRED_ALLOW) if (!allow.includes(r)) errors.push(`settings.json 필수 허용 없음: ${r}`);
+    for (const r of allow) if (!REQUIRED_ALLOW.includes(r)) errors.push(`settings.json 목록 밖 허용: ${r}`);
+  } catch {}
   if (!existsSync(join(root, "learner-template/log.md"))) errors.push("learner-template/log.md 없음");
   for (const s of readdirSync(join(root, ".claude/skills"))) {
     if (statSync(join(root, ".claude/skills", s)).isDirectory() && !existsSync(join(root, ".claude/skills", s, "SKILL.md"))) errors.push(`스킬 ${s}: SKILL.md 없음`);

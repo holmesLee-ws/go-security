@@ -10,15 +10,16 @@
 
 준비물은 Git, [GitHub CLI](https://cli.github.com)(`gh`), Claude Code 또는 Claude Desktop입니다. 비공개 리포이므로 먼저 GitHub에서 보낸 초대를 수락하고, 터미널에서 `gh auth login`으로 로그인합니다. 다른 설치는 필요 없습니다.
 
+원하는 폴더(예: 바탕화면이나 문서 폴더)에서 클론합니다. macOS·Linux 터미널과 Windows PowerShell 모두 같은 명령입니다.
+
 ```bash
-cd ~/Desktop
 gh repo clone holmesLee-ws/go-security
+cd go-security
 ```
 
 **Claude Code**
 
 ```bash
-cd ~/Desktop/go-security
 claude
 ```
 
@@ -26,7 +27,7 @@ claude
 
 **Claude Desktop**
 
-Code 탭에서 데스크탑의 `go-security` 폴더를 선택합니다. Chat 탭이 아니라 Code 탭이어야 튜터 규칙이 적용됩니다.
+Code 탭에서 클론한 `go-security` 폴더를 선택합니다. Chat 탭이 아니라 Code 탭이어야 튜터 규칙이 적용됩니다. 학습 기록 저장이나 조사 때 권한 창이 뜨면 허용을 고르세요(Desktop 경로는 아직 실제로 확인하지 못했습니다 — 아래 「Desktop 확인」).
 
 어느 쪽이든 「안녕」이라고 입력하면 시작합니다. 「ISMS-P 알려줘」처럼 바로 궁금한 것을 말해도 됩니다.
 
@@ -72,3 +73,7 @@ Code 탭에서 데스크탑의 `go-security` 폴더를 선택합니다. Chat 탭
 ## 관련 워크스페이스
 
 go-develop(개발), go-ai(AI 거버넌스), go-control(내부통제), go-hr(인사·노무), go-project-management(프로젝트 관리)와 겹치는 주제는 지도에 「경계·연결」로 표시하고 여기서는 깊게 다루지 않습니다.
+
+## Desktop 확인(1분)
+
+Claude Desktop의 Code 탭에서 이 폴더를 열고 「안녕」을 보냅니다. 코딩 도우미가 아니라 튜터의 인사와 질문 하나가 나오고, 두세 번 답한 뒤 `learner/state.json`이 생기면 정상입니다. 튜터가 준 `learner/studio/…html` 경로를 클릭해 열리는지도 봅니다.
