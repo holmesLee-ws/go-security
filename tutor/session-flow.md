@@ -14,10 +14,10 @@
 
 ## 재개 (`learner/state.json`이 있을 때)
 
-1. `state.json`과 `log.md` 끝부분을 읽는다.
+1. `state.json`과 `log.md`를 Read로 읽는다(Bash `tail`·`ls`·`cat`을 쓰지 않는다).
 2. 지난번 어디까지 했는지 한 줄로 말한다. `notices.no_real_data`가 `true`가 아니면 실제 정보 안내를 한 문장 더한다. `current.pending_probe`에 답하지 않은 탐침이 있으면 복습보다 먼저 그것을 다시 낸다.
 3. `review_at`이 지난 모듈이 있으면 가장 오래된 것에서 복습 질문을 하나 낸다. 없으면 바로 이어간다.
-4. 학습자가 이어갈지 다른 것을 할지 고르게 한다.
+4. 이어 갈 모듈(지난 세션 학습자 결정으로 정한 모듈 포함)의 선수를 `curriculum/map.md`와 대조한다. 기록 없는 선수가 있으면 한 줄로 알리고 「선수 먼저 / 그대로」를 학습자가 고르게 한다. 없으면 이어갈지 다른 것을 할지 고르게 한다.
 
 ## 모듈 하나의 흐름
 
@@ -49,7 +49,10 @@
 - 오답이나 힌트 의존이 나오면 그 차례에 `gaps`에 적고 페이스 표에 따라 `pace`를 고친다. 예측이 일부만 틀린 경우도 오답이다.
 - 모듈을 시작하면 `current.module`과 `current.path`를 적고, 그 모듈의 `status`를 `in_progress`로 바꾼다(`estimated`를 남겨 두지 않는다). 탐침을 내면 `current.pending_probe`에 문제를 적고, 답을 받으면 `null`로 되돌린다.
 - 기록 중이라는 말을 학습자에게 하지 않는다.
-- `learner/` 파일은 Read·Edit·Write 도구로만 읽고 고친다. Bash·python·node로 고치거나 JSON을 검사하지 않는다(권한 창이 떠 흐름이 끊긴다). JSON은 쓰기 전에 눈으로 확인한다.
+- `learner/` 아래 모든 파일(state.json·log.md·studio/ HTML·work/)의 읽기·목록·추가·수정은 Read·Edit·Write 도구로만 한다. `tail`·`ls`·`>>`·`printf`·`sed -i`·python·node를 쓰지 않는다(권한 창이 떠 흐름이 끊긴다). JSON은 쓰기 전에 눈으로 확인한다.
+- 빈틈·전체 경로에서 학습자에게 낸 마지막 질문도 `current.pending_probe`에 남겨 재개 때 잃지 않게 한다.
+- 학습자가 스스로 「헷갈린다·모른다」고 밝힌 지점과 튜터가 보충한 누락도 그 차례에 `gaps`에 적는다.
+- 탐침 정답으로 확인된 수준은 `in_progress`여도 `level`에 반영한다.
 - HTML 여는 명령은 그 명령 하나만 실행한다. 다른 명령과 `&&`·`;`로 묶지 않는다.
 - 진도를 물으면 `state.json`을 근거로 답한다. 기억으로 답하지 않는다.
 - 세션 중 공식 출처로 확인한 근거는 그 차례에 `sources_checked`에 더한다(근거 규칙).
