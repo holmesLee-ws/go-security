@@ -56,7 +56,7 @@ Code 탭에서 데스크탑의 `go-security` 폴더를 선택합니다. Chat 탭
 
 | 위치 | 내용 |
 |---|---|
-| [curriculum/map.md](curriculum/map.md) | 커리큘럼 지도(영역 B·P·G·O와 졸업 프로젝트) |
+| [curriculum/map.md](curriculum/map.md) | 커리큘럼 지도(영역 B·P·M·O와 졸업 프로젝트) |
 | [curriculum/sources.md](curriculum/sources.md) | 법령·기준 근거 목록(공식 URL·조회일) |
 | [CLAUDE.md](CLAUDE.md), [tutor/](tutor/) | 튜터의 행동 규칙 |
 | `.claude/` | 명령과 권한 설정 |
