@@ -8,7 +8,7 @@
 
 ## 시작하기
 
-준비물은 Git, [GitHub CLI](https://cli.github.com)(`gh`), Claude Code 또는 Claude Desktop입니다. 비공개 리포이므로 먼저 GitHub에서 보낸 초대를 수락하고, 터미널에서 `gh auth login`으로 로그인합니다. 다른 설치는 필요 없습니다.
+준비물은 Git, [GitHub CLI](https://cli.github.com)(`gh`), Claude Code 또는 Claude Desktop입니다. 공개 리포라 초대 없이 받을 수 있습니다. 터미널에서 `gh auth login`으로 한 번 로그인합니다. 다른 설치는 필요 없습니다.
 
 원하는 폴더(예: 바탕화면이나 문서 폴더)에서 클론합니다. macOS·Linux 터미널과 Windows PowerShell 모두 같은 명령입니다.
 
